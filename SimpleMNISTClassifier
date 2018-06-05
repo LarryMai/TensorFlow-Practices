@@ -1,0 +1,42 @@
+from tensorflow.examples.tutorials.mnist import input_data
+import tensorflow as tf
+
+INPUT_NODE = 784 # input node size
+OUTPUT_NODE = 10  # output node size
+LEARNING_RATE = 0.5 # The Learning Rate
+RUN_BATCH_TIEMS = 10000
+BATCH_SIZE = 200
+
+def main(_):
+    # Import data
+    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+
+    # Create the model
+    x = tf.placeholder(tf.float32, [None, INPUT_NODE])
+    W = tf.Variable(tf.zeros([INPUT_NODE, OUTPUT_NODE]))
+    b = tf.Variable(tf.zeros([OUTPUT_NODE]))
+    y = tf.matmul(x, W) + b
+
+    # Define loss function and optimizer
+    yData = tf.placeholder(tf.float32, [None, OUTPUT_NODE])
+    cross_entropy = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits(labels=yData, logits=y))
+    train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cross_entropy)
+
+    sess = tf.InteractiveSession()
+    tf.global_variables_initializer().run()
+    # Train
+    for times in range(RUN_BATCH_TIEMS):
+        batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
+        sess.run(train_step, feed_dict={x: batch_xs, yData: batch_ys})
+
+
+    # Test trained model
+    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(yData, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    print(sess.run(accuracy, feed_dict={x: mnist.test.images,
+                                        yData: mnist.test.labels}))
+
+
+if __name__ == '__main__':
+    tf.app.run(main=main)
